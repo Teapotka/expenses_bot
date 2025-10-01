@@ -1,7 +1,7 @@
 from telegram import Update, ReplyKeyboardMarkup
 from telegram.ext import Application, CommandHandler, ContextTypes
 from config import TELEGRAM_TOKEN, db
-from handlers.balance import setbalance
+from handlers.balance import setbalance, balance
 from handlers.weekly import showweekly, currentweek, weekstats
 from handlers.records import showrecords
 from telegram.ext import ConversationHandler, MessageHandler, filters
@@ -32,6 +32,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = [
         [InlineKeyboardButton("➕ Add record", callback_data="add")],
         [InlineKeyboardButton("💰 Set balance", callback_data="setbalance")],
+        [InlineKeyboardButton("💵 Project balance", callback_data="balance")],
         [InlineKeyboardButton("📅 Weekly estimate", callback_data="setweekly")],
         [InlineKeyboardButton("📊 Show weekly", callback_data="showweekly")],
         [InlineKeyboardButton("📈 Week stats", callback_data="weekstats")],
@@ -83,6 +84,9 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.edit_message_text("ℹ️ To show the current week, just use:\n`/currentweek`", parse_mode="Markdown")
     elif query.data == "showrecords":
         await query.edit_message_text(f"ℹ️ To show records, use:\n`/showrecords <year-week>`.\nCurrent week is {currentweekstring}", parse_mode="Markdown")
+    elif query.data == "balance":
+        await balance(update, context)
+        return
     elif query.data == "return_start":
         await start(update, context)
         return
@@ -96,6 +100,7 @@ def main():
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CallbackQueryHandler(button_handler))
     app.add_handler(CommandHandler("setbalance", setbalance))
+    app.add_handler(CommandHandler("balance", balance))
 
     setweekly_conv = ConversationHandler(
     entry_points=[CommandHandler("setweekly", setweekly_start)],
