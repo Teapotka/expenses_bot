@@ -15,7 +15,7 @@ TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 MONGO_URI = os.getenv("MONGO_URI")
 
 # === MongoDB connection ===
-client = MongoClient(MONGO_URI)
+client = MongoClient(MONGO_URI, tls = True)
 db = client[DB_NAME]
 settings = db["settings"]
 records = db["records"]
