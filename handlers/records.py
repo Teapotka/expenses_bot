@@ -11,7 +11,7 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 ADD_AMOUNT, ADD_CATEGORY, ADD_WEEK = range(3)
 
 
-CATEGORIES = ["groceries", "salary", "rent", "transport"]
+CATEGORIES = ["salary", "bonus", "tips", "groceries", "rent", "travel", "party", "supplies", "subscriptions", "other" ]
 
 async def add_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("Enter amount (use negative for expense, positive for income):")

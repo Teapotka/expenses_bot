@@ -16,7 +16,8 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 WEEK, TYPE, CATEGORY, AMOUNT, CONTINUE = range(5)
 
 INCOME_CATEGORIES = ["salary", "tips", "bonus"]
-EXPENSE_CATEGORIES = ["groceries", "rent", "travels", "supplies", "subscription", "party", "other"]
+EXPENSE_CATEGORIES = [ "groceries", "rent", "travel", "party", "supplies", "subscriptions", "other" ]
+
 
 
 async def setweekly_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
