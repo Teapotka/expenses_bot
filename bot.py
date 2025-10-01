@@ -20,7 +20,7 @@ client = MongoClient(
     tls=True,
     tlsAllowInvalidCertificates=False
 )
-db = client.get_default_database()
+db = client[DB_NAME]
 settings = db["settings"]
 records = db["records"]
 week_estimates = db["week_estimates"]
