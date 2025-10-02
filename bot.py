@@ -143,8 +143,16 @@ async def webhook(request: Request):
 
 @api.on_event("startup")
 async def on_startup():
-    # Set webhook to Render’s URL
+    # Initialize and start telegram app
+    await telegram_app.initialize()
+    await telegram_app.start()
+    # Set webhook
     await telegram_app.bot.set_webhook(WEBHOOK_URL + "/webhook")
+@api.on_event("shutdown")
+async def on_shutdown():
+    await telegram_app.stop()
+    await telegram_app.shutdown()
+
 # === Main ===
 # def main():
 #     app = Application.builder().token(TELEGRAM_TOKEN).build()
