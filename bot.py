@@ -94,13 +94,12 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         await query.edit_message_text("❌ Unknown action")
 
-app = Application.builder().token(TELEGRAM_TOKEN).build()
+telegram_app  = Application.builder().token(TELEGRAM_TOKEN).build()
 
-app = Application.builder().token(TELEGRAM_TOKEN).build()
-app.add_handler(CommandHandler("start", start))
-app.add_handler(CallbackQueryHandler(button_handler))
-app.add_handler(CommandHandler("setbalance", setbalance))
-app.add_handler(CommandHandler("balance", balance))
+telegram_app.add_handler(CommandHandler("start", start))
+telegram_app.add_handler(CallbackQueryHandler(button_handler))
+telegram_app.add_handler(CommandHandler("setbalance", setbalance))
+telegram_app.add_handler(CommandHandler("balance", balance))
 
 setweekly_conv = ConversationHandler(
 entry_points=[CommandHandler("setweekly", setweekly_start)],
@@ -113,11 +112,11 @@ states={
     },
 fallbacks=[CommandHandler("cancel", cancel)],
     )
-app.add_handler(setweekly_conv)
+telegram_app.add_handler(setweekly_conv)
 
     # app.add_handler(CommandHandler("setweekly", setweekly))
-app.add_handler(CommandHandler("showweekly", showweekly))
-app.add_handler(CommandHandler("currentweek", currentweek))
+telegram_app.add_handler(CommandHandler("showweekly", showweekly))
+telegram_app.add_handler(CommandHandler("currentweek", currentweek))
 
 conv_handler = ConversationHandler(
 entry_points=[CommandHandler("add", add_start)],
@@ -128,24 +127,24 @@ states={
     },
 fallbacks=[CommandHandler("cancel", cancel)],
 )
-app.add_handler(conv_handler)
+telegram_app.add_handler(conv_handler)
 
 # app.add_handler(CommandHandler("add", add))
-app.add_handler(CommandHandler("showrecords", showrecords))
-app.add_handler(CommandHandler("weekstats", weekstats))
+telegram_app.add_handler(CommandHandler("showrecords", showrecords))
+telegram_app.add_handler(CommandHandler("weekstats", weekstats))
 
-applicatiob = FastAPI()
-@applicatiob.post("/webhook")
+api = FastAPI()
+@api.post("/webhook")
 async def webhook(request: Request):
     data = await request.json()
-    update = Update.de_json(data, app.bot)
-    await app.process_update(update)
+    update = Update.de_json(data, telegram_app.bot)
+    await telegram_app.process_update(update)
     return {"ok": True}
 
-@applicatiob.on_event("startup")
+@api.on_event("startup")
 async def on_startup():
     # Set webhook to Render’s URL
-    await app.bot.set_webhook(WEBHOOK_URL + "/webhook")
+    await telegram_app.bot.set_webhook(WEBHOOK_URL + "/webhook")
 # === Main ===
 # def main():
 #     app = Application.builder().token(TELEGRAM_TOKEN).build()
