@@ -1,6 +1,7 @@
 from telegram import Update, ReplyKeyboardMarkup
 from telegram.ext import Application, CommandHandler, ContextTypes
-from config import TELEGRAM_TOKEN, db
+from config import TELEGRAM_TOKEN, db, WEBHOOK_URL
+from fastapi import FastAPI, Request
 from handlers.balance import setbalance, balance
 from handlers.weekly import showweekly, currentweek, weekstats
 from handlers.records import showrecords
@@ -93,48 +94,99 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         await query.edit_message_text("❌ Unknown action")
 
+app = Application.builder().token(TELEGRAM_TOKEN).build()
 
-# === Main ===
-def main():
-    app = Application.builder().token(TELEGRAM_TOKEN).build()
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(CallbackQueryHandler(button_handler))
-    app.add_handler(CommandHandler("setbalance", setbalance))
-    app.add_handler(CommandHandler("balance", balance))
+app = Application.builder().token(TELEGRAM_TOKEN).build()
+app.add_handler(CommandHandler("start", start))
+app.add_handler(CallbackQueryHandler(button_handler))
+app.add_handler(CommandHandler("setbalance", setbalance))
+app.add_handler(CommandHandler("balance", balance))
 
-    setweekly_conv = ConversationHandler(
-    entry_points=[CommandHandler("setweekly", setweekly_start)],
-    states={
+setweekly_conv = ConversationHandler(
+entry_points=[CommandHandler("setweekly", setweekly_start)],
+states={
         WEEK: [MessageHandler(filters.TEXT & ~filters.COMMAND, setweekly_week)],
         TYPE: [MessageHandler(filters.TEXT & ~filters.COMMAND, setweekly_type)],
         CATEGORY: [MessageHandler(filters.TEXT & ~filters.COMMAND, setweekly_category)],
         AMOUNT: [MessageHandler(filters.TEXT & ~filters.COMMAND, setweekly_amount)],
         CONTINUE: [MessageHandler(filters.TEXT & ~filters.COMMAND, setweekly_continue)],
     },
-    fallbacks=[CommandHandler("cancel", cancel)],
+fallbacks=[CommandHandler("cancel", cancel)],
     )
-    app.add_handler(setweekly_conv)
+app.add_handler(setweekly_conv)
 
     # app.add_handler(CommandHandler("setweekly", setweekly))
-    app.add_handler(CommandHandler("showweekly", showweekly))
-    app.add_handler(CommandHandler("currentweek", currentweek))
+app.add_handler(CommandHandler("showweekly", showweekly))
+app.add_handler(CommandHandler("currentweek", currentweek))
 
-    conv_handler = ConversationHandler(
-    entry_points=[CommandHandler("add", add_start)],
-    states={
+conv_handler = ConversationHandler(
+entry_points=[CommandHandler("add", add_start)],
+states={
         ADD_AMOUNT: [MessageHandler(filters.TEXT & ~filters.COMMAND, add_amount)],
         ADD_CATEGORY: [MessageHandler(filters.TEXT & ~filters.COMMAND, add_category)],
         ADD_WEEK: [MessageHandler(filters.TEXT & ~filters.COMMAND, add_week)],
     },
-    fallbacks=[CommandHandler("cancel", cancel)],
+fallbacks=[CommandHandler("cancel", cancel)],
 )
-    app.add_handler(conv_handler)
+app.add_handler(conv_handler)
 
-    # app.add_handler(CommandHandler("add", add))
-    app.add_handler(CommandHandler("showrecords", showrecords))
-    app.add_handler(CommandHandler("weekstats", weekstats))
+# app.add_handler(CommandHandler("add", add))
+app.add_handler(CommandHandler("showrecords", showrecords))
+app.add_handler(CommandHandler("weekstats", weekstats))
 
-    app.run_polling()
+applicatiob = FastAPI()
+@applicatiob.post("/webhook")
+async def webhook(request: Request):
+    data = await request.json()
+    update = Update.de_json(data, app.bot)
+    await app.process_update(update)
+    return {"ok": True}
 
-if __name__ == "__main__":
-    main()
+@applicatiob.on_event("startup")
+async def on_startup():
+    # Set webhook to Render’s URL
+    await app.bot.set_webhook(WEBHOOK_URL + "/webhook")
+# === Main ===
+# def main():
+#     app = Application.builder().token(TELEGRAM_TOKEN).build()
+#     app.add_handler(CommandHandler("start", start))
+#     app.add_handler(CallbackQueryHandler(button_handler))
+#     app.add_handler(CommandHandler("setbalance", setbalance))
+#     app.add_handler(CommandHandler("balance", balance))
+
+#     setweekly_conv = ConversationHandler(
+#     entry_points=[CommandHandler("setweekly", setweekly_start)],
+#     states={
+#         WEEK: [MessageHandler(filters.TEXT & ~filters.COMMAND, setweekly_week)],
+#         TYPE: [MessageHandler(filters.TEXT & ~filters.COMMAND, setweekly_type)],
+#         CATEGORY: [MessageHandler(filters.TEXT & ~filters.COMMAND, setweekly_category)],
+#         AMOUNT: [MessageHandler(filters.TEXT & ~filters.COMMAND, setweekly_amount)],
+#         CONTINUE: [MessageHandler(filters.TEXT & ~filters.COMMAND, setweekly_continue)],
+#     },
+#     fallbacks=[CommandHandler("cancel", cancel)],
+#     )
+#     app.add_handler(setweekly_conv)
+
+#     # app.add_handler(CommandHandler("setweekly", setweekly))
+#     app.add_handler(CommandHandler("showweekly", showweekly))
+#     app.add_handler(CommandHandler("currentweek", currentweek))
+
+#     conv_handler = ConversationHandler(
+#     entry_points=[CommandHandler("add", add_start)],
+#     states={
+#         ADD_AMOUNT: [MessageHandler(filters.TEXT & ~filters.COMMAND, add_amount)],
+#         ADD_CATEGORY: [MessageHandler(filters.TEXT & ~filters.COMMAND, add_category)],
+#         ADD_WEEK: [MessageHandler(filters.TEXT & ~filters.COMMAND, add_week)],
+#     },
+#     fallbacks=[CommandHandler("cancel", cancel)],
+# )
+#     app.add_handler(conv_handler)
+
+#     # app.add_handler(CommandHandler("add", add))
+#     app.add_handler(CommandHandler("showrecords", showrecords))
+#     app.add_handler(CommandHandler("weekstats", weekstats))
+
+#     app.run_polling()
+
+# if __name__ == "__main__":
+#     main()
